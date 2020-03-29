@@ -1,0 +1,10 @@
+F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\bin\Debug\MC_ProtocolTool.exe.config
+F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\bin\Debug\MC_ProtocolTool.exe
+F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\bin\Debug\MC_ProtocolTool.pdb
+F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\obj\Debug\MC_ProtocolTool.Form1.resources
+F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\obj\Debug\MC_ProtocolTool.Properties.Resources.resources
+F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\obj\Debug\MC_ProtocolTool.csproj.GenerateResource.cache
+F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\obj\Debug\MC_ProtocolTool.csproj.CoreCompileInputs.cache
+F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\obj\Debug\MC_ProtocolTool.exe
+F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\obj\Debug\MC_ProtocolTool.pdb
+F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\obj\Debug\MC_ProtocolTool.csprojAssemblyReference.cache
