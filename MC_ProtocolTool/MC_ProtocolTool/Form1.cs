@@ -21,9 +21,7 @@ namespace MC_ProtocolTool
 {
 	public partial class Form1 : Form
 	{
-		bool isRunning;
 		ServerProperties props;
-
 
 		public Form1()
 		{
@@ -41,13 +39,10 @@ namespace MC_ProtocolTool
 			TB_ClientPort.Text = "25565";
 			Lbl_Bytes.Text = "0";
 			//tabControl.SelectedIndex = 1;
-			isRunning = false;
 
 			// Add tab page "Server [Ultra-simple emulation]"
 
 			MCClient.AttatchTerminal = TB_ClientConsole;
-
-			Packet p = new Packet();
 
 			try
 			{
@@ -75,12 +70,10 @@ namespace MC_ProtocolTool
 				MessageBox.Show("Wrong server IP address or port number.", "Connection error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				return;
 			}
-
 			if(!MCClient.IsConnected)
 			{
 				Btn_ClientStartStop.Text = "Stop";
 				MCClient.Connect(CB_ClientAddress.SelectedText, Convert.ToInt32(TB_ClientPort.Text));
-				Lbl_Bytes.Text = MCClient.ReceivedBytes.ToString();
 			}
 			else
 			{

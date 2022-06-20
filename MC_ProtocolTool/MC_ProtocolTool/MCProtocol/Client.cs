@@ -15,26 +15,25 @@ namespace MCProtocol
 	/*
 	 * Minectaft Protocole Wiki - https://wiki.vg/Protocol
 	 * 
+	 * SLP - https://wiki.vg/Server_List_Ping
+	 * 
 	 * List of packet IDs - https://github.com/ammaraskar/MinecraftPacketNames/blob/master/packets.json
 	 * 
 	 * Ping example - https://gist.github.com/csh/2480d14fbbb33b4bbae3
 	 * 
 	 * In-game debug screen - https://minecraft.gamepedia.com/Debug_screen
 	 * 
-	 * Debug Stick - https://minecraft.gamepedia.com/Debug_Stick
+	 * "Debug Stick" - https://minecraft.gamepedia.com/Debug_Stick
 	 * 
 	 */
 
 	public static class MCClient
 	{
-		private static TcpClient tcpClient;
+		private static TcpClient tcpClient = new TcpClient();
 		private static NetworkStream netStream;
 		private static Task task;
-		//private static List<byte> inputBuffer;
-		//private static List<byte> outputBuffer;
 		private static string hostAddress;
 		private static int portNumber;
-		//private static int dataOffset;
 
 		private static TextBox terminal;
 
@@ -64,7 +63,7 @@ namespace MCProtocol
 
 		public static int ReceivedBytes { get; private set; }
 
-		public static ClientState State { get; private set; }
+		public static ClientState State { get; private set; } = ClientState.NotConnected;
 
 		public static TextBox AttatchTerminal
 		{
@@ -75,14 +74,11 @@ namespace MCProtocol
 		////////////////////////////////////////////////////////////////////
 		public static void TerminalWrite(bool clientSide, string prefix, string msg)
 		{
-			if(terminal != null)
-			{
-				if(clientSide)
-					terminal.AppendText("[" + DateTime.UtcNow.ToLongTimeString() + "] [Client] [" + prefix + "]  " + msg);
-				else
-					terminal.AppendText("[" + DateTime.UtcNow.ToLongTimeString() + "] [Server] [" + prefix + "]  " + msg);
-				terminal.AppendText(Environment.NewLine);
-			}
+			if(clientSide)
+				terminal.AppendText("[" + DateTime.UtcNow.ToLongTimeString() + "] [Client] [" + prefix + "]  " + msg);
+			else
+				terminal.AppendText("[" + DateTime.UtcNow.ToLongTimeString() + "] [Server] [" + prefix + "]  " + msg);
+			terminal.AppendText(Environment.NewLine);
 		}
 
 		public static bool Connect(string host, int port)
@@ -93,11 +89,9 @@ namespace MCProtocol
 					MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
 					return false;
 			}
-			if(State != ClientState.NotConnected)
-				return false;
-
 			hostAddress = host;
 			portNumber = port;
+			tcpClient = new TcpClient();
 			task = tcpClient.ConnectAsync(hostAddress, portNumber);
 			State = ClientState.Connecting;
 
@@ -105,7 +99,7 @@ namespace MCProtocol
 
 			while(!task.IsCompleted)
 			{
-				TerminalWrite(true, "Info", "Connecting..");
+				TerminalWrite(true, "Info", "Connecting...");
 				Thread.Sleep(250);
 			}
 
@@ -116,7 +110,6 @@ namespace MCProtocol
 				tcpClient.Dispose();
 				return false;
 			}
-
 			TerminalWrite(true, "Info", "Connection established");
 			State = ClientState.Connected;
 			netStream = tcpClient.GetStream();
@@ -130,65 +123,104 @@ namespace MCProtocol
 			TerminalWrite(true, "Info", "Disconnected");
 			State = ClientState.NotConnected;
 			task.Dispose();
-			//inputBuffer.Clear();
-			//outputBuffer.Clear();
 			tcpClient.Close();
 			netStream.Close();
-			netStream.Dispose();
 		}
 
 		public static void Ping()
 		{
 			if(State != ClientState.Connected)
 				return;
+			//netStream = tcpClient.GetStream();
 			try
 			{
+				/**
+				TerminalWrite(true, "Info", "Handshaking server...");
+				byte[] _handshakeMsg = CreateHandshakeMsg();
+				WriteVarInt(_handshakeMsg.Length);
+				netStream.Write(_handshakeMsg, 0, _handshakeMsg.Length);
+
+				// request
+				netStream.WriteByte(0x01);
+				netStream.WriteByte(0x00);
 				
+				//byte[] buffer = new byte[short.MaxValue]; // If server has mods, use this
+				byte[] buffer = new byte[Int16.MaxValue];
+				netStream.Read(buffer, 0, buffer.Length);
 
-				//TerminalWrite(true, "Info", "Handshaking server...");
-				//byte[] _handshakeMsg = CreateHandshakeMsg();
-				//WriteVarInt(_handshakeMsg.Length);
-				//netStream.Write(_handshakeMsg, 0, _handshakeMsg.Length);
+				// response
+				int sz = ReceivedBytes = ReadVarInt(buffer);
+				int packet = ReadVarInt(buffer);
 
-				//// request
-				//netStream.WriteByte(0x01);
-				//netStream.WriteByte(0x00);
-				
-				////byte[] buffer = new byte[short.MaxValue]; // If server has mods, use this
-				//byte[] buffer = new byte[Int16.MaxValue];
-				//netStream.Read(buffer, 0, buffer.Length);
+				if(packet == -1)
+					throw new IOException("Premature end of stream");
+				if(packet != 0x00)
+					throw new IOException("Invalid packet ID");
 
-				//// response
-				//int sz = ReceivedBytes = ReadVarInt(buffer);
-				//int packet = ReadVarInt(buffer);
+				int len = ReadVarInt(buffer);
 
-				//if(packet == -1)
-				//	throw new IOException("Premature end of stream");
-				//if(packet != 0x00)
-				//	throw new IOException("Invalid packet ID");
+				if(len == -1)
+					throw new IOException("Premature end of stream");
+				if(len == 0x00)
+					throw new IOException("Invalid string length");
 
-				//int len = ReadVarInt(buffer);
+				TerminalWrite(false, "Info", "Received packet: ID = " + packet.ToString("X2") + ", length = " + len);
 
-				//if(len == -1)
-				//	throw new IOException("Premature end of stream");
-				//if(len == 0x00)
-				//	throw new IOException("Invalid string length");
+				string json = ReadString(buffer, len);
+				TerminalWrite(false, "JSON data", json);
 
-				//TerminalWrite(false, "Info", "Received packet: ID = " + packet.ToString("X2") + ", length = " + len);
-
-				//string json = ReadString(buffer, len);
-				//TerminalWrite(false, "JSON data", json);
-
-				//// ping
-				//long ms = DateTime.Now.Millisecond;
-				//netStream.WriteByte(0x09); // packed size
-				//netStream.WriteByte(0x01); // ping
-				//WriteVarLong(ms);
+				// ping
+				long ms = DateTime.Now.Millisecond;
+				netStream.WriteByte(0x09); // packed size
+				netStream.WriteByte(0x01); // ping
+				WriteVarLong(ms);
 
 				// pong
-				//ReadVarInt
+				// ReadVarInt
 
-				//inputBuffer.Clear();
+				inputBuffer.Clear();
+				*/
+
+				/* Handshake packet (ID = 0)
+				 * Frame:
+				 * +------------------------|---------------------|--------------|------------------+
+				 * | Protocol Version [int] | IP address [string] | Port [short] | Next state [int] |
+				 * +------------------------|---------------------|--------------|------------------+
+				 */
+
+				// Handshaking
+				Packet hsPacket = new Packet();
+				hsPacket.WriteInt(578); // Procotol version
+				hsPacket.WriteString(hostAddress); // IP address
+				hsPacket.WriteShort((short)portNumber); // port number
+				hsPacket.WriteInt(1); // State = 1 - status
+				hsPacket.Send(netStream);
+
+				// Request
+				netStream.WriteByte(0x01); // size = 1 byte
+				netStream.WriteByte(0x00); // ID = 0
+
+				// Read server answer
+				hsPacket.Read(netStream);
+				int size = hsPacket.ReadInt();
+				int packId = hsPacket.ReadInt();
+				int strLen = hsPacket.ReadInt();
+				string str = hsPacket.ReadString(strLen);
+
+				hsPacket.Clear();
+				hsPacket.SetID(0x01);
+				hsPacket.WriteLong(123);
+				hsPacket.Send(netStream);
+
+				hsPacket.Read(netStream);
+				long msSrv = hsPacket.ReadInt();
+				
+				TerminalWrite(true, "Info", "Size = " + size);
+				TerminalWrite(true, "Info", "ID = " + packId);
+				TerminalWrite(true, "Info", "Len = " + strLen);
+				TerminalWrite(true, "Info", str);
+				TerminalWrite(true, "Pong", hsPacket.ToString());
+				
 			}
 			catch(IOException ex)
 			{
@@ -196,143 +228,47 @@ namespace MCProtocol
 			}
 		}
 
-		//private static byte[] CreateHandshakeMsg()
-		{
-			/* Handshake packet (ID = 0)
-			 * Frame:
-			 * +-----------|------------------------|---------------------|--------------|------------------+
-			 * | Packet ID | Protocol Version [int] | IP address [string] | Port [short] | Next state [int] |
-			 * +-----------|------------------------|---------------------|--------------|------------------+
-			 */
-			//netStream.WriteByte(0x00); // handshake ID
-			//WriteVarInt(578);
-			//WriteString(hostAddress);
-			//WriteShort((short)portNumber);
-			//WriteVarInt(1);
 
-			//return inputBuffer.ToArray();
-		}
-		////////////////////////////////////////////////////////////////////
-		////////////////////////////////////////////////////////////////////
-		/*
-		#region Read / Write methods
-		public static byte ReadByte(byte[] buffer)
+		public void Send(NetworkStream netStream)
 		{
-			var b = buffer[dataOffset];
-			dataOffset++;
-			return b;
-		}
+			if(netStream == null)
+				throw new ArgumentNullException("stream");
+			if(id < 0)
+				throw new Exception("Unknown packet ID");
 
-		public static byte[] Read(byte[] buffer, int length)
-		{
-			byte[] data = new byte[length];
-			Array.Copy(buffer, dataOffset, data, 0, length);
-			dataOffset += length;
-			return data;
+			// Packet data
+			byte[] dataBuff = ToArray();
+			dataBuffer.Clear();
+
+			// Converting ID to VarInt
+			WriteInt(id);
+			byte[] idData = ToArray();
+			dataBuffer.Clear();
+
+			// Converting packet size to VarInt
+			int packetLength = dataBuff.Length + idData.Length;
+			WriteInt(packetLength);
+			byte[] dataLength = ToArray();
+			dataBuffer.Clear();
+
+			// Sending data in order
+			netStream.Write(dataLength, 0, dataLength.Length);
+			netStream.Write(idData, 0, idData.Length);
+			netStream.Write(dataBuff, 0, dataBuff.Length);
 		}
 
-		public static int ReadVarInt(byte[] buffer)
+		public void Read(NetworkStream netStream)
 		{
-			var value = 0;
-			var size = 0;
-			int b;
-			while(((b = ReadByte(buffer)) & 0x80) == 0x80)
-			{
-				value |= (b & 0x7F) << (size++ * 7);
-				if(size > 5)
-					throw new Exception("This VarInt is an imposter!");
-			}
-			return value | ((b & 0x7F) << (size * 7));
+			if(netStream == null)
+				throw new ArgumentNullException("stream");
+
+			byte[] data = new byte[bufferSize];
+			netStream.Read(data, 0, dataBuffer.Capacity);
+			dataBuffer = data.ToList();
 		}
 
-		public static long ReadVarLong(byte[] buffer)
-		{
-			var value = 0;
-			var size = 0;
-			int b;
-			while(((b = ReadByte(buffer)) & 0x80) != 0)
-			{
-				value |= (b & 0x7F) << (size++ * 7);
-				if(size > 10)
-					throw new Exception("This VarLong  is an imposter!");
-			} 
-			return value |= (b & 0x7F) << (size++ * 7);
-		}
+		// https://stackoverflow.com/questions/30768091/java-sending-handshake-packets-to-minecraft-server
 
-		public static string ReadString(byte[] buffer, int length)
-		{
-			var data = Read(buffer, length);
-			return Encoding.UTF8.GetString(data);
-		}
-
-		public static void WriteVarInt(int value)
-		{
-			while((value & 0x80) != 0)
-			{
-				inputBuffer.Add((byte)((value & 0x7F) | 0x80));
-				value = (int)((uint)value) >> 7;
-			}
-			inputBuffer.Add((byte)value);
-		}
-
-		public static void WriteVarLong(long value)
-		{
-			while((value & 0x80) != 0)
-			{
-				inputBuffer.Add((byte)((value & 0x7F) | 0x80));
-				value = (long)((ulong)value) >> 7;
-			}
-			inputBuffer.Add((byte)value);
-		}
-
-		public static void WriteShort(short value)
-		{
-			inputBuffer.AddRange(BitConverter.GetBytes(value));
-		}
-
-		public static void WriteString(string data)
-		{
-			var buffer = Encoding.UTF8.GetBytes(data);
-			WriteVarInt(buffer.Length);
-			inputBuffer.AddRange(buffer);
-		}
-
-		public static void WriteByte(byte b)
-		{
-			netStream.WriteByte(b);
-		}
-
-		public static void SendPacket(int id)
-		{
-			// https://stackoverflow.com/questions/30768091/java-sending-handshake-packets-to-minecraft-server
-		}
-
-		public static void Flush(int id = -1)
-		{
-			byte[] buffer = inputBuffer.ToArray();
-			inputBuffer.Clear();
-
-			var add = 0;
-			var packetData = new[] { (byte)0x00 };
-			if(id >= 0)
-			{
-				WriteVarInt(id);
-				packetData = inputBuffer.ToArray();
-				add = packetData.Length;
-				inputBuffer.Clear();
-			}
-
-			WriteVarInt(buffer.Length + add);
-			var bufferLength = inputBuffer.ToArray();
-			inputBuffer.Clear();
-
-			netStream.Write(bufferLength, 0, bufferLength.Length);
-			netStream.Write(packetData, 0, packetData.Length);
-			netStream.Write(buffer, 0, buffer.Length);
-		}
-		#endregion
-		*/
-		////////////////////////////////////////////////////////////////////
-		////////////////////////////////////////////////////////////////////
+		// https://github.com/tom-weiland/tcp-udp-networking/blob/tutorial-part2/GameServer/GameServer/Packet.cs
 	}
 }

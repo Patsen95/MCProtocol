@@ -8,3 +8,13 @@ F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\obj\Debug
 F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\obj\Debug\MC_ProtocolTool.exe
 F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\obj\Debug\MC_ProtocolTool.pdb
 F:\Dysk Google\Projects\Programming\Visual\MC_ServerTest\MC_ServerTest\obj\Debug\MC_ProtocolTool.csprojAssemblyReference.cache
+C:\Users\Patryk\Documents\GitHub\MCProtocol\MC_ProtocolTool\MC_ProtocolTool\bin\Debug\MC_ProtocolTool.exe.config
+C:\Users\Patryk\Documents\GitHub\MCProtocol\MC_ProtocolTool\MC_ProtocolTool\bin\Debug\MC_ProtocolTool.exe
+C:\Users\Patryk\Documents\GitHub\MCProtocol\MC_ProtocolTool\MC_ProtocolTool\bin\Debug\MC_ProtocolTool.pdb
+C:\Users\Patryk\Documents\GitHub\MCProtocol\MC_ProtocolTool\MC_ProtocolTool\obj\Debug\MC_ProtocolTool.Form1.resources
+C:\Users\Patryk\Documents\GitHub\MCProtocol\MC_ProtocolTool\MC_ProtocolTool\obj\Debug\MC_ProtocolTool.Properties.Resources.resources
+C:\Users\Patryk\Documents\GitHub\MCProtocol\MC_ProtocolTool\MC_ProtocolTool\obj\Debug\MC_ProtocolTool.csproj.GenerateResource.cache
+C:\Users\Patryk\Documents\GitHub\MCProtocol\MC_ProtocolTool\MC_ProtocolTool\obj\Debug\MC_ProtocolTool.csproj.CoreCompileInputs.cache
+C:\Users\Patryk\Documents\GitHub\MCProtocol\MC_ProtocolTool\MC_ProtocolTool\obj\Debug\MC_ProtocolTool.exe
+C:\Users\Patryk\Documents\GitHub\MCProtocol\MC_ProtocolTool\MC_ProtocolTool\obj\Debug\MC_ProtocolTool.pdb
+C:\Users\Patryk\Documents\GitHub\MCProtocol\MC_ProtocolTool\MC_ProtocolTool\obj\Debug\MC_ProtocolTool.csprojAssemblyReference.cache

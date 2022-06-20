@@ -8,20 +8,37 @@ using System.IO;
 
 namespace MCProtocol
 {
-	public class Packet
+	public class Packet : IDisposable
 	{
 		private List<byte> dataBuffer;
 		private int dataOffset;
+		private int id;
+		private bool disposedValue = false;
 
-		public int ID { get; set; }
 		public int Size { get { return dataBuffer.Count; } }
-		public byte[] Data { get { return dataBuffer.ToArray(); } }
+		public int Length { get; set; }
 
 		////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////
 		public Packet()
 		{
 			dataBuffer = new List<byte>();
+			dataOffset = 0;
+		}
+
+		public Packet(int id)
+		{
+			dataBuffer = new List<byte>();
+			dataOffset = 0;
+			this.id = id;
+		}
+
+		public Packet(byte[] data)
+		{
+			dataBuffer = new List<byte>();
+			dataOffset = 0;
+
+			dataBuffer.AddRange(data);
 		}
 
 		////////////////////////////////////////////////////////////////////
@@ -75,11 +92,11 @@ namespace MCProtocol
 			int tmp;
 			int val = 0;
 			int sz = 0;
-			while((tmp = ReadByte() & 0x80) == 0x80)
+			while(((tmp = ReadByte()) & 0x80) != 0)
 			{
 				val |= (tmp & 0x7F) << (sz++ * 7);
 				if(sz > 5)
-					throw new Exception("This VarInt is an imposter!");
+					throw new Exception("This VarInt is too big!");
 			}
 			return val | ((tmp & 0x7F) << (sz * 7));
 		}
@@ -89,11 +106,11 @@ namespace MCProtocol
 			long tmp;
 			long val = 0;
 			int sz = 0;
-			while((tmp = ReadByte() & 0x80) == 0x80)
+			while(((tmp = ReadByte()) & 0x80) != 0)
 			{
 				val |= (tmp & 0x7F) << (sz++ * 7);
 				if(sz > 10)
-					throw new Exception("This VarLong is an imposter!");
+					throw new Exception("This VarLong is too big!");
 			}
 			return val | ((tmp & 0x7F) << (sz * 7));
 		}
@@ -106,18 +123,39 @@ namespace MCProtocol
 			return Encoding.UTF8.GetString(buff);
 		}
 
-		public void Send(NetworkStream stream)
+		public void SetID(int id)
 		{
-			if(dataBuffer == null || dataBuffer.Count == 0)
-				throw new Exception("Data buffer is empty.");
-			if(stream == null)
-				throw new ArgumentNullException("stream");
-			// https://stackoverflow.com/questions/30768091/java-sending-handshake-packets-to-minecraft-server
+			this.id = id;
 		}
 
-		public void Read()
+		public byte[] ToArray()
 		{
+			return dataBuffer.ToArray();
+		}
 
+		public void Clear()
+		{
+			dataBuffer.Clear();
+			dataOffset = 0;
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if(!disposedValue)
+			{
+				if(disposing)
+				{
+					dataBuffer = null;
+					dataOffset = 0;
+				}
+				disposedValue = true;
+			}
+		}
+
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
 		}
 	}
 }
